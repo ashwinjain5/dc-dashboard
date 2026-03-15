@@ -690,6 +690,85 @@ function generateFGSummary(tables) {
   return { by_product: byProduct, by_customer: byCustomer };
 }
 
+function generateFGReceiptsAll(tables) {
+  const fgReceipts = [...tables.fg_receipts.values()].filter(r => r.status !== 'Cancelled');
+  const customers = new Map([...tables.customers.values()].map(c => [c.id || c._id, c]));
+
+  return fgReceipts.map(r => {
+    const cust = customers.get(r.customer_id);
+    const rd = normalizeTimestamp(r.receipt_date) || normalizeTimestamp(r.created_at);
+    return {
+      receipt_number: r.receipt_number || '',
+      receipt_date: rd ? rd.split('T')[0] : '',
+      product_name: r.product_name || '',
+      model_id: r.model_id || '',
+      customer_id: r.customer_id || '',
+      customer_name: cust?.name || r.customer_name || '',
+      quantity: toNum(r.quantity),
+      purchase_rate: toNum(r.purchase_rate),
+      amount: toNum(r.amount),
+      status: r.status || '',
+      is_order_related: r.is_order_related === true || r.is_order_related === 'true',
+    };
+  }).sort((a, b) => (b.receipt_date || '').localeCompare(a.receipt_date || ''));
+}
+
+function generateDCItemsAll(tables) {
+  const dcs = [...tables.delivery_challans.values()].filter(d => d.status !== 'Cancelled');
+  const dcItems = [...tables.dc_items.values()];
+  const customers = new Map([...tables.customers.values()].map(c => [c.id || c._id, c]));
+
+  const result = [];
+  for (const dc of dcs) {
+    const dcId = dc.id || dc._id;
+    const cust = customers.get(dc.customer_id);
+    const dcDate = normalizeTimestamp(dc.dc_date) || normalizeTimestamp(dc.created_at);
+    const items = dcItems.filter(di => di.dc_id === dcId);
+
+    for (const item of items) {
+      result.push({
+        dc_number: dc.dc_number || '',
+        dc_date: dcDate ? dcDate.split('T')[0] : '',
+        dc_type: dc.dc_type || '',
+        dc_status: dc.status || '',
+        customer_id: dc.customer_id || '',
+        customer_name: cust?.name || dc.customer_name || '',
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        sku: item.sku || '',
+        category_name: item.category_name || '',
+        unit: item.unit || '',
+        quantity: toNum(item.quantity),
+        rate: toNum(item.rate),
+        amount: toNum(item.amount),
+      });
+    }
+  }
+
+  return result.sort((a, b) => (b.dc_date || '').localeCompare(a.dc_date || ''));
+}
+
+function generatePaymentsAll(tables) {
+  const payments = [...tables.payments.values()].filter(p => p.status !== 'Cancelled');
+  const customers = new Map([...tables.customers.values()].map(c => [c.id || c._id, c]));
+
+  return payments.map(p => {
+    const cust = customers.get(p.customer_id);
+    const pd = normalizeTimestamp(p.payment_date) || normalizeTimestamp(p.created_at);
+    return {
+      payment_number: p.payment_number || '',
+      payment_date: pd ? pd.split('T')[0] : '',
+      customer_id: p.customer_id || '',
+      customer_name: cust?.name || p.customer_name || '',
+      amount: toNum(p.amount),
+      payment_mode: p.payment_mode || '',
+      status: p.status || '',
+      invoice_id: p.invoice_id || null,
+      invoice_number: p.invoice_number || null,
+    };
+  }).sort((a, b) => (b.payment_date || '').localeCompare(a.payment_date || ''));
+}
+
 function generateMarketSummary(tables) {
   const marketItems = [...tables.market_items.values()];
   const items = new Map([...tables.items.values()].map(i => [i.id || i._id, i]));
@@ -765,6 +844,9 @@ async function main() {
     'rates.json': generateRates(tables),
     'fg_summary.json': generateFGSummary(tables),
     'market_summary.json': generateMarketSummary(tables),
+    'fg_receipts_all.json': generateFGReceiptsAll(tables),
+    'dc_items_all.json': generateDCItemsAll(tables),
+    'payments_all.json': generatePaymentsAll(tables),
   };
 
   // Write files

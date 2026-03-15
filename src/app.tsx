@@ -2,6 +2,7 @@ import { useState, useCallback } from 'preact/hooks';
 import type { DashboardData } from './types';
 import { decryptBundle } from './crypto';
 import { LoginScreen } from './components/LoginScreen';
+import { TabBar } from './components/TabBar';
 import { Header } from './components/Header';
 import { HeroTotal } from './components/HeroTotal';
 import { SummaryCards } from './components/SummaryCards';
@@ -12,6 +13,12 @@ import { MaterialSummary } from './components/MaterialSummary';
 import { FGAnalysis } from './components/FGAnalysis';
 import { RateAnalysis } from './components/RateAnalysis';
 import { MarketSummary } from './components/MarketSummary';
+import { KaarigharTab } from './components/KaarigharTab';
+import { ReadyMaalTab } from './components/ReadyMaalTab';
+import { RawMaterialTab } from './components/RawMaterialTab';
+import { PaymentsTab } from './components/PaymentsTab';
+
+const TABS = ['Home', 'Kaarighar', 'Ready Maal', 'Raw Material', 'Payments'];
 
 function mapToDashboardData(raw: Record<string, unknown>): DashboardData {
   return {
@@ -25,6 +32,9 @@ function mapToDashboardData(raw: Record<string, unknown>): DashboardData {
     rates: raw.rates,
     fgSummary: raw.fg_summary,
     marketSummary: raw.market_summary,
+    fgReceiptsAll: raw.fg_receipts_all,
+    dcItemsAll: raw.dc_items_all,
+    paymentsAll: raw.payments_all,
   } as DashboardData;
 }
 
@@ -47,6 +57,7 @@ export function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
 
   const attemptLoad = useCallback(async (email: string, password: string, isAutoLogin = false) => {
     setLoading(true);
@@ -90,17 +101,45 @@ export function App() {
   }
 
   return (
-    <div class="mx-auto max-w-lg px-3 py-4 pb-16">
-      <Header meta={data.meta} />
-      <HeroTotal overview={data.overview} />
-      <SummaryCards overview={data.overview} />
-      <CustomerLedger customers={data.customers} details={data.customerDetails} />
-      <AgingBreakdown aging={data.aging} />
-      <TrendTable trends={data.trends} />
-      <MaterialSummary material={data.material} />
-      <FGAnalysis fgSummary={data.fgSummary} />
-      <RateAnalysis rates={data.rates} />
-      <MarketSummary market={data.marketSummary} />
+    <div class="mx-auto max-w-lg px-3 pb-16">
+      <TabBar tabs={TABS} active={activeTab} onTabChange={setActiveTab} />
+
+      {activeTab === 0 && (
+        <div>
+          <Header meta={data.meta} />
+          <HeroTotal overview={data.overview} />
+          <SummaryCards overview={data.overview} />
+          <CustomerLedger customers={data.customers} details={data.customerDetails} />
+          <AgingBreakdown aging={data.aging} />
+          <TrendTable trends={data.trends} />
+          <MaterialSummary material={data.material} />
+          <FGAnalysis fgSummary={data.fgSummary} />
+          <RateAnalysis rates={data.rates} />
+          <MarketSummary market={data.marketSummary} />
+        </div>
+      )}
+
+      {activeTab === 1 && (
+        <KaarigharTab
+          customers={data.customers}
+          details={data.customerDetails}
+          dcItemsAll={data.dcItemsAll}
+          fgReceiptsAll={data.fgReceiptsAll}
+          paymentsAll={data.paymentsAll}
+        />
+      )}
+
+      {activeTab === 2 && (
+        <ReadyMaalTab fgReceipts={data.fgReceiptsAll} />
+      )}
+
+      {activeTab === 3 && (
+        <RawMaterialTab dcItems={data.dcItemsAll} />
+      )}
+
+      {activeTab === 4 && (
+        <PaymentsTab payments={data.paymentsAll} />
+      )}
     </div>
   );
 }

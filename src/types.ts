@@ -185,6 +185,51 @@ export interface MarketSummary {
   by_item: MarketItem[];
 }
 
+// ── Detail-level types for tab views ──
+
+export interface FGReceiptDetail {
+  receipt_number: string;
+  receipt_date: string;
+  product_name: string;
+  model_id: string;
+  customer_id: string;
+  customer_name: string;
+  quantity: number;
+  purchase_rate: number;
+  amount: number;
+  status: string;
+  is_order_related: boolean;
+}
+
+export interface DCItemDetail {
+  dc_number: string;
+  dc_date: string;
+  dc_type: string;
+  dc_status: string;
+  customer_id: string;
+  customer_name: string;
+  item_id: string;
+  item_name: string;
+  sku: string;
+  category_name: string;
+  unit: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+}
+
+export interface PaymentDetail {
+  payment_number: string;
+  payment_date: string;
+  customer_id: string;
+  customer_name: string;
+  amount: number;
+  payment_mode: string;
+  status: string;
+  invoice_id: string | null;
+  invoice_number: string | null;
+}
+
 export interface DashboardData {
   meta: Meta;
   overview: Overview;
@@ -196,4 +241,7 @@ export interface DashboardData {
   rates: Rates;
   fgSummary: FGSummary;
   marketSummary: MarketSummary;
+  fgReceiptsAll: FGReceiptDetail[];
+  dcItemsAll: DCItemDetail[];
+  paymentsAll: PaymentDetail[];
 }
