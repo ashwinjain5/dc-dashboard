@@ -20,7 +20,7 @@ function Card({ label, amount, count, extra }: {
 
 export function SummaryCards({ overview }: { overview: Overview }) {
   return (
-    <div class="mb-4 grid grid-cols-2 gap-2">
+    <div class="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
       <Card label="Active DCs" amount={overview.active_dc_total} count={overview.active_dc_count} />
       <Card label="Open Payments" amount={overview.open_payments_total} count={overview.open_payments_count} />
       <Card

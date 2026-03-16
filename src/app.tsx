@@ -39,17 +39,24 @@ function mapToDashboardData(raw: Record<string, unknown>): DashboardData {
 }
 
 const SESSION_KEY = 'dc_dash_session';
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 
 function getStoredCredentials(): { email: string; password: string } | null {
   try {
-    const stored = sessionStorage.getItem(SESSION_KEY);
-    if (stored) return JSON.parse(stored);
+    const stored = localStorage.getItem(SESSION_KEY);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return { email: parsed.email, password: parsed.password };
   } catch { /* ignore */ }
   return null;
 }
 
 function storeCredentials(email: string, password: string) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ email, password }));
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ email, password, expiresAt: Date.now() + ONE_YEAR_MS }));
 }
 
 export function App() {
@@ -76,7 +83,7 @@ export function App() {
       if (!isAutoLogin) {
         setLoginError('Invalid email or password');
       }
-      sessionStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_KEY);
     } finally {
       setLoading(false);
     }
@@ -101,7 +108,7 @@ export function App() {
   }
 
   return (
-    <div class="mx-auto max-w-lg px-3 pb-16">
+    <div class="mx-auto max-w-lg px-3 pb-16 md:max-w-3xl lg:max-w-5xl">
       <TabBar tabs={TABS} active={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 0 && (
@@ -110,12 +117,18 @@ export function App() {
           <HeroTotal overview={data.overview} />
           <SummaryCards overview={data.overview} />
           <CustomerLedger customers={data.customers} details={data.customerDetails} />
-          <AgingBreakdown aging={data.aging} />
-          <TrendTable trends={data.trends} />
-          <MaterialSummary material={data.material} />
-          <FGAnalysis fgSummary={data.fgSummary} />
-          <RateAnalysis rates={data.rates} />
-          <MarketSummary market={data.marketSummary} />
+          <div class="md:grid md:grid-cols-2 md:gap-4">
+            <AgingBreakdown aging={data.aging} />
+            <TrendTable trends={data.trends} />
+          </div>
+          <div class="md:grid md:grid-cols-2 md:gap-4">
+            <MaterialSummary material={data.material} />
+            <FGAnalysis fgSummary={data.fgSummary} />
+          </div>
+          <div class="md:grid md:grid-cols-2 md:gap-4">
+            <RateAnalysis rates={data.rates} />
+            <MarketSummary market={data.marketSummary} />
+          </div>
         </div>
       )}
 
